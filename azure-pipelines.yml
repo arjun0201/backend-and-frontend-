@@ -10,7 +10,6 @@ steps:
     tags: |
      $(Build.BuildId)
      latest
-steps:
 - task: AzureWebAppContainer@1
   displayName: 'Azure Web App on Container Deploy: dotnetbackend007'
   inputs:
