@@ -1,18 +1,58 @@
+trigger: 
+  branches:
+    include:
+      - develop
+ 
 pool:
-  name: Default
-steps:
-- task: Docker@2
-  displayName: buildAndPush
-  inputs:
-    containerRegistry: backend
-    repository: 'lexitas backend'
-    Dockerfile: ShopAdminTool.Server/Dockerfile
-    tags: |
-     $(Build.BuildId)
-     latest
-- task: AzureWebAppContainer@1
-  displayName: 'Azure Web App on Container Deploy: dotnetbackend007'
-  inputs:
-    azureSubscription: 'Free Trial (d25c3f37-60f9-4b6d-bb35-df401fa85d76)'
-    appName: dotnetbackend007
-    containers: 'backendandfrontend.azurecr.io/lexitasbackend:latest'
+  vmImage: windows-latest
+ 
+variables:
+- name: buildConfiguration
+  value: 'Release'
+ 
+stages:
+  - stage: build
+    displayName: 'Build Rasi Business lincensing Backend Dev'
+    condition: eq(variables['Build.SourceBranch'], 'refs/heads/develop')
+    jobs: 
+      - job: RCBBuild
+        steps:
+ 
+        - task: UseDotNet@2
+          displayName: 'Install .NET Core SDK'
+          inputs:
+            version: 8.x #Changed 7.x to 8.x
+        
+        - task: NuGetToolInstaller@1
+          inputs:
+            versionSpec: 
+            checkLatest: true
+ 
+        - task: DotNetCoreCLI@2
+          inputs:
+            command: 'restore'
+            projects: '**/*.csproj'
+ 
+        - task: DotNetCoreCLI@2
+          displayName: 'Build Rasi Business lincensing Backend Solution'
+          inputs:
+            command: 'build'
+            projects: '**/*.sln'
+            arguments: '--no-restore'
+ 
+        - task: DotNetCoreCLI@2
+          displayName: 'Prepare Business lincensing Backend API application publish'
+          inputs:
+            command: 'publish'
+            publishWebProjects: true
+            arguments: '--no-restore'
+ 
+ 
+        - task: AzureWebApp@1
+          displayName: 'Deploy Business lincensing Backend Dev'
+          inputs:
+            azureSubscription: 'rasi-app-se'
+            appType: 'webApp'
+            appName: 'RASI-DEV-BL-AS'
+            package: '$(System.DefaultWorkingDirectory)/**/*.zip'
+            deploymentMethod: 'auto'
