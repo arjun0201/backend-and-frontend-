@@ -51,7 +51,7 @@ stages:
         - task: AzureWebApp@1
           displayName: 'Deploy Business lincensing Backend Dev'
           inputs:
-            azureSubscription: 'rasi-app-se'
+            azureSubscription: 'github.com_arjun0201'
             appType: 'webApp'
             appName: 'RASI-DEV-BL-AS'
             package: '$(System.DefaultWorkingDirectory)/**/*.zip'
