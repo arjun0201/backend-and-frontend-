@@ -1,58 +1,60 @@
-trigger: 
-  branches:
-    include:
-      - develop
- 
+# Nodejs site
+
+trigger:
+  - develop
+
 pool:
-  vmImage: windows-latest
- 
-variables:
-- name: buildConfiguration
-  value: 'Release'
- 
+  vmImage: ubuntu-latest
+
 stages:
   - stage: build
-    displayName: 'Build Rasi Business lincensing Backend Dev'
+    displayName: "Build Rasi Business lincensing Backend Dev"
     condition: eq(variables['Build.SourceBranch'], 'refs/heads/develop')
-    jobs: 
-      - job: RCBBuild
+    jobs:
+      - job: build
         steps:
- 
-        - task: UseDotNet@2
-          displayName: 'Install .NET Core SDK'
-          inputs:
-            version: 8.x #Changed 7.x to 8.x
-        
-        - task: NuGetToolInstaller@1
-          inputs:
-            versionSpec: 
-            checkLatest: true
- 
-        - task: DotNetCoreCLI@2
-          inputs:
-            command: 'restore'
-            projects: '**/*.csproj'
- 
-        - task: DotNetCoreCLI@2
-          displayName: 'Build Rasi Business lincensing Backend Solution'
-          inputs:
-            command: 'build'
-            projects: '**/*.sln'
-            arguments: '--no-restore'
- 
-        - task: DotNetCoreCLI@2
-          displayName: 'Prepare Business lincensing Backend API application publish'
-          inputs:
-            command: 'publish'
-            publishWebProjects: true
-            arguments: '--no-restore'
- 
- 
-        - task: AzureWebApp@1
-          displayName: 'Deploy Business lincensing Backend Dev'
-          inputs:
-            azureSubscription: 'github.com_arjun0201'
-            appType: 'webApp'
-            appName: 'RASI-DEV-BL-AS'
-            package: '$(System.DefaultWorkingDirectory)/**/*.zip'
-            deploymentMethod: 'auto'
+          - task: NodeTool@0
+            displayName: "Install nodejs latest version"
+            inputs:
+              versionSource: "spec"
+              versionSpec: "18.x"
+              checkLatest: true
+
+          - script: "npm install next react react-dom"
+            displayName: "Install next react"
+
+          - script: "npm install"
+            displayName: "Install npm dependencies"
+
+          - task: CopyFiles@2
+            displayName: "Copy npm package"
+            inputs:
+              SourceFolder: "$(Build.SourcesDirectory)"
+              Contents: "*.tgz"
+              TargetFolder: "$(Build.ArtifactStagingDirectory)/npm"
+
+          - task: PublishBuildArtifacts@1
+            displayName: "Publish Artifact: npm"
+            inputs:
+              TargetPath: "$(Build.ArtifactStagingDirectory)/npm"
+              ArtifactName: "npm"
+
+          - script: "rm .env.local"
+            displayName: "remove non esential files Dev"
+          
+          - task: AzureStaticWebApp@0
+            displayName: " Frontend Dev"
+            inputs:
+              app_location: "/" # App source code path
+              api_location: "" # Api source code path - optional
+              output_location: "out" # Built app content directory - optional
+              is_static_export: true # For running Static Next.js file - optional
+              # app_location: '/'
+              # output_location: 'out'
+              # api_location: ''
+              # skip_app_build: true
+              # skip_api_build: true
+              azure_static_web_apps_api_token: $(BL_STATIC_APP_TOKEN_DEV)
+              #deployment_environment: "develop"
+              # workingDirectory: '$(System.ArtifactsDirectory)/npm'
+              app_build_command: 'npm run build:dev'
