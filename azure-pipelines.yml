@@ -9,7 +9,6 @@ pool:
 stages:
   - stage: build
     displayName: "Build Rasi Business lincensing Backend Dev"
-    condition: eq(variables['Build.SourceBranch'], 'refs/heads/develop')
     jobs:
       - job: build
         steps:
